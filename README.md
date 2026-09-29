@@ -1,58 +1,99 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Etakit Web
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Etkileşimli tahta kilit sisteminin web sunucusu. Tahtalar kilitliyken ekranda kısa ömürlü bir karekod gösterir; yetkili kişi bu kodu sitede okutunca sunucu o tahtaya açma izni yazar. Tahta izni kendi bağlantısından alır. Aynı site öğretmen yoklamasını ve veli bildirimlerini de yönetir.
 
-## About Laravel
+Laravel 13 ve PHP 8.3 ile yazılmıştır. Arayüz Blade, Bootstrap ve yalın JavaScript kullanır; derleme adımı yoktur.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Kullanıcılar
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+| Rol | Giriş | Yaptıkları |
+| --- | --- | --- |
+| Süper yönetici | `/super/giris` (e-posta ve parola) | Kurum ekler, düzenler, siler, aktif veya pasif yapar. Tahta kayıt anahtarlarını görür. |
+| Kurum yöneticisi | `/idare/giris` (e-posta ve parola) | Tahtaları onaylar, açar, kilitler, kapatır. Öğretmen, öğrenci ve kilit ayarlarını yönetir. Yoklamaları görür. |
+| Öğretmen | `/` (telefon ve tek kullanımlık kod) | Kendi kurumunun tahtalarını açar, kilitler, kapatır. Yoklama alır. |
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Pasif kurumun yöneticisi ve öğretmenleri giriş yapamaz, açık oturumları kapanır; yeni tahta ve öğretmen kaydı alınmaz.
 
-## Learning Laravel
+## Özellikler
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- **Tahtalar:** Tahta ilk kez bağlanınca listede onay bekler. Onaylı tahtalar ad, durum ve son görülme zamanıyla listelenir. Bir süre bildirim göndermeyen tahta çevrimdışı görünür.
+- **Karekodla açma:** Mobilde alt menüdeki **QR okut** kamerayı açar. Okunan kod, tahtanın son bildirdiği kodla eşleşirse açma izni yazılır. Kamera yalnızca HTTPS adreste çalışır.
+- **Kilitleme ve kapatma:** Listeden gönderilir. Komut, tahtanın açık tuttuğu bağlantıdan iner; tahtaya dışarıdan kapı açılmaz.
+- **Kilit ayarları:** Boşta kilitlenme süresi, kilit geri sayımı, bağlantı kopunca bekleme, acil durum PIN'i ve süresi, oturum süresi.
+- **Öğretmenler:** Öğretmen kurum koduyla kendini kaydeder, idare onaylar. İdare doğrudan da ekleyebilir.
+- **Öğrenciler:** e-Okul "Sınıf Listesi" Excel raporundan içe aktarılır; tek tek eklenip düzenlenebilir, Excel olarak dışa aktarılır.
+- **Yoklama:** Öğretmen sınıf ve ders seçip gelmeyen veya geç gelen öğrencileri işaretler. İdare günlük özet ve liste görür.
+- **Veli bildirimi:** Açıksa yoklamadan sonra veliye şablonlu mesaj sıraya alınır. Şablonda `{ogrenci}`, `{sinif}`, `{ders}`, `{tarih}`, `{durum}`, `{kurum}` kullanılabilir.
+- **Mesaj kuyruğu:** Öğretmen giriş kodları ve veli bildirimleri `otp` tablosuna yazılır. EtaOtp istemcisi (Chrome eklentisi veya masaüstü uygulaması) bunları `api/etaotp` üzerinden alıp WhatsApp ile gönderir.
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Kurulum
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+php artisan db:seed
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+`db:seed`, `.env` içindeki bilgilerle süper yöneticiyi, ilk kurumu ve kurum yöneticisini oluşturur. Süper yönetici bilgisi boşsa atlanır; kurum yöneticisi parolası boşsa ilk kurum ve yönetici oluşturulmaz.
 
-## Contributing
+Yerelde WampServer ile `public` klasörü üzerinden çalışır (`APP_URL=http://localhost/etakit/web/public`). Canlıda web kökü `public` klasörü olmalıdır.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Ortam değişkenleri
 
-## Code of Conduct
+| Değişken | Açıklama | Varsayılan |
+| --- | --- | --- |
+| `SUPER_ADMIN_NAME`, `SUPER_ADMIN_EMAIL`, `SUPER_ADMIN_PASSWORD` | Seed ile oluşturulan süper yönetici | boş |
+| `FIRST_ORG_NAME`, `FIRST_ORG_CODE` | Seed ile oluşturulan ilk kurum | `İlk kurum`, `00000000` |
+| `PANEL_ADMIN_NAME`, `PANEL_ADMIN_EMAIL`, `PANEL_ADMIN_PASSWORD` | İlk kurumun yöneticisi | boş parola |
+| `BOARD_ENROLLMENT_KEY` | Eski tek kurumlu kurulumdan ilk kuruma taşınan tahta kayıt anahtarı | boş |
+| `BOARD_QR_TTL` | Karekodun geçerlilik süresi (sn) | `25` |
+| `BOARD_OFFLINE_SECONDS` | Bu süre bildirim gelmezse tahta çevrimdışı görünür (sn) | `45` |
+| `BOARD_COMMAND_WAIT` | Komut bağlantısının açık tutulma süresi (sn) | `20` |
+| `BOARD_COMMAND_RETRY` | Onaylanmayan komutun yeniden verilme süresi (sn) | `25` |
+| `BOARD_UNLOCK_TTL` | Açma izninin geçerlilik süresi (sn) | `90` |
+| `BOARD_SHUTDOWN_TTL` | Onaylanmayan kapatma komutunun düşme süresi (sn) | `600` |
+| `SCHOOL_TIMEZONE` | Yoklama günü ve saatleri için saat dilimi | `Europe/Istanbul` |
+| `ATTENDANCE_LESSONS` | Günlük ders sayısı | `8` |
+| `ETAOTP_TOKEN` | EtaOtp istemcisinin `api/etaotp` için kullandığı anahtar | boş |
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Her kurumun tahta kayıt anahtarı kurum kaydında durur ve süper yönetici listesinde görünür. Tahta paketi bu anahtarla kaydolur.
 
-## Security Vulnerabilities
+## Tahta API'si
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Tahta sunucuya dışarıdan bağlanır. Kayıttan sonraki istekler `Authorization: Bearer <device_token>` taşır.
 
-## License
+| Yöntem | Adres | Amaç |
+| --- | --- | --- |
+| `POST` | `/api/device/register` | Kurum kayıt anahtarıyla kaydolur, `device_token` alır |
+| `POST` | `/api/device/heartbeat` | Durum bildirir (kilitli, açık, kapanıyor) |
+| `POST` | `/api/device/name` | Tahta adını bildirir |
+| `POST` | `/api/device/qr` | Ekrandaki güncel karekodu bildirir |
+| `GET` | `/api/device/settings` | Kurumun kilit ayarlarını alır |
+| `GET` | `/api/device/commands?wait=20` | Komut bekler (uzun yoklama) |
+| `POST` | `/api/device/commands/{id}/ack` | Komutu aldığını onaylar |
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## EtaOtp API'si
+
+`Authorization: Bearer <ETAOTP_TOKEN>` ister.
+
+| Yöntem | Adres | Amaç |
+| --- | --- | --- |
+| `POST` | `/api/etaotp/claim` | Gönderilecek sıradaki mesajı alır |
+| `POST` | `/api/etaotp/{id}/sent` | Gönderildi olarak işaretler |
+| `POST` | `/api/etaotp/{id}/failed` | Başarısız olarak işaretler |
+| `POST` | `/api/etaotp/{id}/release` | Mesajı kuyruğa geri bırakır |
+
+## Test
+
+```bash
+php artisan test
+```
+
+## Depodaki diğer parçalar
+
+- `../kilit/pardus`: Pardus ETAP tahta kilidi (`.deb` paketi)
+- `../kilit/windows`: Windows tahta kilidi
+- `../chrome/etaotp`: WhatsApp ile mesaj gönderen Chrome eklentisi
+- `../desktop/etaotp`: Aynı işi yapan masaüstü uygulaması
