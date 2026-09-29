@@ -95,5 +95,4 @@ php artisan test
 
 - `../kilit/pardus`: Pardus ETAP tahta kilidi (`.deb` paketi)
 - `../kilit/windows`: Windows tahta kilidi
-- `../chrome/etaotp`: WhatsApp ile mesaj gönderen Chrome eklentisi
-- `../desktop/etaotp`: Aynı işi yapan masaüstü uygulaması
+- `../desktop/etaotp`: WhatsApp ile mesaj gönderen Chrome eklentisi
